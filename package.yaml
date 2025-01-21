@@ -1,0 +1,60 @@
+name:                lazy-physics
+version:             0.1.0.0
+github:              "mathematisse/lazy-physics"
+license:             BSD-3-Clause
+author:              "Lucien Pineau"
+maintainer:          "lucien.pineau@epitech.eu"
+copyright:           "2024 all-authors"
+
+extra-source-files:
+- README.md
+
+description:         "No"
+
+dependencies:
+- base >= 4.7 && < 5
+- gloss
+- linear
+- lens
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: lib
+
+executables:
+  gui:
+    main:                Main.hs
+    source-dirs:
+    - gui
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - lazy-physics
+
+
+tests:
+  test:
+    main:                Main.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - QuickCheck
+    - hspec
+    - base
+    - hspec-discover
+    - lazy-physics

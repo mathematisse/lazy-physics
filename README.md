@@ -1,0 +1,2 @@
+- Create rudimentary physic simulation with 100% energy conservation
+- Space partitioning for collision detection
