@@ -1,7 +1,10 @@
 module Engine.System.Update (
   updateWorld,
   updateBall,
-  handleConstraints
+  handleConstraints,
+  applyGravity,
+  updatePosition,
+  handleCollisions
 ) where
 
 import Linear.V2
@@ -10,6 +13,7 @@ import Linear.Metric
 import Control.Lens
 
 import Engine.Data.Types
+import Data.List (tails)
 
 import Debug.Trace
 
@@ -25,6 +29,38 @@ updateBallState config ball =
       -- Calculate new velocity
       newVel = oldVel + (dt *^ g)
   in ball { position = newPos, velocity = newVel }
+
+
+-- | Simple gravity application used in tests
+applyGravity :: Config -> Ball -> Ball
+applyGravity config ball =
+  let dt = timeStep config
+      g  = gravity config
+  in ball { velocity = velocity ball + dt *^ g }
+
+-- | Update the position of a ball using its current velocity
+updatePosition :: Config -> Ball -> Ball
+updatePosition config ball =
+  let dt = timeStep config
+  in ball { position = position ball + dt *^ velocity ball }
+
+-- | Simple collision response that only flips velocity with dampening
+handleCollisions :: Config -> Ball -> Ball
+handleCollisions config ball =
+  let V2 x y = position ball
+      V2 vx vy = velocity ball
+      (w, h) = screenBounds config
+      r = radius ball
+      damp = dampeningFactor config
+      bottom = -h / 2 + r
+      top    = h / 2 - r
+      left   = -w / 2 + r
+      right  = w / 2 - r
+      newVX = if (x < left && vx < 0) || (x > right && vx > 0)
+               then -vx * damp else vx
+      newVY = if (y < bottom && vy < 0) || (y > top && vy > 0)
+               then -vy * damp else vy
+  in ball { velocity = V2 newVX newVY }
 
 
 
@@ -154,8 +190,9 @@ updateBall config = handleConstraints config . updateBallState config
 -- | Resolves all collisions in the system
 resolveCollisions :: [Ball] -> [Ball]
 resolveCollisions balls =
-  foldl resolvePair balls [(b1, b2) | b1 <- balls, b2 <- balls, b1 /= b2, areColliding b1 b2]
+  foldl resolvePair balls pairs
   where
+    pairs = [(b1, b2) | (b1:rest) <- tails balls, b2 <- rest, areColliding b1 b2]
     resolvePair :: [Ball] -> (Ball, Ball) -> [Ball]
     resolvePair currentBalls (b1, b2) =
       let (updatedB1, updatedB2) = resolveCollision b1 b2
